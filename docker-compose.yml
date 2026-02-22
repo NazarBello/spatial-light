@@ -1,0 +1,40 @@
+services:
+  # ============================================
+  # PostgreSQL 16 — our main database
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: spatial-light-db
+    ports:
+      - "5433:5432"          # accessible on localhost:5432
+    environment:
+      POSTGRES_DB: spatial_light
+      POSTGRES_USER: spatial
+      POSTGRES_PASSWORD: spatial123
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # data survives container restarts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spatial -d spatial_light"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ============================================
+  # Eclipse Mosquitto 2.x — MQTT message broker
+  # ============================================
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: spatial-light-mqtt
+    ports:
+      - "1883:1883"          # MQTT protocol
+      - "9001:9001"          # WebSocket (optional, for browser-based MQTT clients)
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
+# Named volumes — Docker manages these automatically
+volumes:
+  pgdata:
+  mosquitto_data:
+  mosquitto_log:
